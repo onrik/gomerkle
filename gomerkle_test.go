@@ -79,37 +79,36 @@ func (h NotHash) BlockSize() int {
 
 // FailingHash: always returns error on Write
 type FailingHash struct {
-	SucceedFor int
+	attempts int
 }
 
-var failingHashWriteAttempts int = 0
-
-func NewFailingHashAt(n int) FailingHash {
-	failingHashWriteAttempts = 0
-	return FailingHash{SucceedFor: n}
+func NewFailingHashAt(n int) *FailingHash {
+	return &FailingHash{
+		attempts: n,
+	}
 }
 
-func NewFailingHash() FailingHash {
+func NewFailingHash() *FailingHash {
 	return NewFailingHashAt(0)
 }
 
-func (h FailingHash) Write(p []byte) (int, error) {
-	failingHashWriteAttempts += 1
-	if failingHashWriteAttempts > h.SucceedFor {
+func (h *FailingHash) Write(p []byte) (int, error) {
+	h.attempts--
+	if h.attempts <= 0 {
 		return 0, errors.New("Failed to write hash")
-	} else {
-		return 0, nil
 	}
+
+	return 0, nil
 }
-func (h FailingHash) Sum(p []byte) []byte {
+func (h *FailingHash) Sum(p []byte) []byte {
 	return p
 }
-func (h FailingHash) Reset() {
+func (h *FailingHash) Reset() {
 }
-func (h FailingHash) Size() int {
+func (h *FailingHash) Size() int {
 	return 0
 }
-func (h FailingHash) BlockSize() int {
+func (h *FailingHash) BlockSize() int {
 	return 0
 }
 
@@ -249,12 +248,12 @@ func containsNode(nodes []Node, node *Node) bool {
 	return false
 }
 
-func createDummyTreeData(count, size int, use_rand bool) [][]byte {
+func createDummyTreeData(count, size int, useRand bool) [][]byte {
 	/* Creates an array of bytes with nonsense in them */
 	data := make([][]byte, count)
 	for i := 0; i < count; i++ {
 		garbage := make([]byte, size)
-		if use_rand {
+		if useRand {
 			read := 0
 			for read < size {
 				n, _ := rand.Read(garbage[read:])
@@ -514,19 +513,19 @@ func TestGetProof(t *testing.T) {
 	proof := tree.GetProof(5)
 	expected := Proof{
 		map[string][]byte{
-			"left": []byte{182, 0, 252, 107, 110, 161, 149, 93, 17, 72, 97, 196, 41, 52, 198, 89},
+			"left": {182, 0, 252, 107, 110, 161, 149, 93, 17, 72, 97, 196, 41, 52, 198, 89},
 		},
 		map[string][]byte{
-			"right": []byte{254, 179, 55, 70, 100, 189, 9, 46, 252, 26, 168, 125, 179, 98, 109, 86},
+			"right": {254, 179, 55, 70, 100, 189, 9, 46, 252, 26, 168, 125, 179, 98, 109, 86},
 		},
 		map[string][]byte{
-			"left": []byte{98, 40, 179, 120, 254, 245, 143, 248, 208, 179, 3, 215, 114, 144, 115, 87},
+			"left": {98, 40, 179, 120, 254, 245, 143, 248, 208, 179, 3, 215, 114, 144, 115, 87},
 		},
 		map[string][]byte{
-			"right": []byte{86, 22, 191, 37, 72, 68, 16, 116, 208, 179, 61, 82, 214, 0, 3, 226},
+			"right": {86, 22, 191, 37, 72, 68, 16, 116, 208, 179, 61, 82, 214, 0, 3, 226},
 		},
 		map[string][]byte{
-			"right": []byte{37, 153, 197, 153, 191, 14, 1, 134, 75, 185, 94, 199, 7, 212, 201, 178},
+			"right": {37, 153, 197, 153, 191, 14, 1, 134, 75, 185, 94, 199, 7, 212, 201, 178},
 		},
 	}
 	require.Equal(t, expected, proof)
@@ -554,19 +553,19 @@ func TestVerifyProof(t *testing.T) {
 	tree = NewTree(md5.New())
 	proof := Proof{
 		map[string][]byte{
-			"left": []byte{182, 0, 252, 107, 110, 161, 149, 93, 17, 72, 97, 196, 41, 52, 198, 89},
+			"left": {182, 0, 252, 107, 110, 161, 149, 93, 17, 72, 97, 196, 41, 52, 198, 89},
 		},
 		map[string][]byte{
-			"right": []byte{254, 179, 55, 70, 100, 189, 9, 46, 252, 26, 168, 125, 179, 98, 109, 86},
+			"right": {254, 179, 55, 70, 100, 189, 9, 46, 252, 26, 168, 125, 179, 98, 109, 86},
 		},
 		map[string][]byte{
-			"left": []byte{98, 40, 179, 120, 254, 245, 143, 248, 208, 179, 3, 215, 114, 144, 115, 87},
+			"left": {98, 40, 179, 120, 254, 245, 143, 248, 208, 179, 3, 215, 114, 144, 115, 87},
 		},
 		map[string][]byte{
-			"right": []byte{86, 22, 191, 37, 72, 68, 16, 116, 208, 179, 61, 82, 214, 0, 3, 226},
+			"right": {86, 22, 191, 37, 72, 68, 16, 116, 208, 179, 61, 82, 214, 0, 3, 226},
 		},
 		map[string][]byte{
-			"right": []byte{37, 153, 197, 153, 191, 14, 1, 134, 75, 185, 94, 199, 7, 212, 201, 178},
+			"right": {37, 153, 197, 153, 191, 14, 1, 134, 75, 185, 94, 199, 7, 212, 201, 178},
 		},
 	}
 	root = []byte{198, 171, 151, 198, 99, 102, 171, 160, 114, 231, 230, 66, 133, 203, 93, 244}
@@ -575,30 +574,30 @@ func TestVerifyProof(t *testing.T) {
 	// Test invalid proof
 	proof = Proof{
 		map[string][]byte{
-			"left": []byte{182, 0, 252, 107, 110, 161, 149, 93, 17, 72, 97, 196, 41, 52, 198, 89},
+			"left": {182, 0, 252, 107, 110, 161, 149, 93, 17, 72, 97, 196, 41, 52, 198, 89},
 		},
 		map[string][]byte{
-			"right": []byte{254, 179, 55, 70, 100, 189, 9, 46, 252, 26, 168, 125, 179, 98, 109, 86},
+			"right": {254, 179, 55, 70, 100, 189, 9, 46, 252, 26, 168, 125, 179, 98, 109, 86},
 		},
 		map[string][]byte{
-			"left": []byte{98, 40, 179, 120, 254, 245, 143, 248, 208, 179, 3, 215, 114, 144, 115, 87},
+			"left": {98, 40, 179, 120, 254, 245, 143, 248, 208, 179, 3, 215, 114, 144, 115, 87},
 		},
 		map[string][]byte{
-			"right": []byte{86, 22, 191, 37, 72, 68, 16, 116, 208, 179, 61, 82, 214, 0, 3, 226},
+			"right": {86, 22, 191, 37, 72, 68, 16, 116, 208, 179, 61, 82, 214, 0, 3, 226},
 		},
 		map[string][]byte{
-			"left": []byte{37, 153, 197, 153, 191, 14, 1, 134, 75, 185, 94, 199, 7, 212, 201, 178},
+			"left": {37, 153, 197, 153, 191, 14, 1, 134, 75, 185, 94, 199, 7, 212, 201, 178},
 		},
 	}
 	require.False(t, tree.VerifyProof(proof, root, []byte("value5")))
 
 	proof = Proof{
 		map[string][]byte{
-			"left": []byte{182, 0, 252, 107, 110, 161, 149, 93, 17, 72, 97, 196, 41, 52, 198, 89},
+			"left": {182, 0, 252, 107, 110, 161, 149, 93, 17, 72, 97, 196, 41, 52, 198, 89},
 		},
 		map[string][]byte{},
 		map[string][]byte{
-			"right": []byte{86, 22, 191, 37, 72, 68, 16, 116, 208, 179, 61, 82, 214, 0, 3, 226},
+			"right": {86, 22, 191, 37, 72, 68, 16, 116, 208, 179, 61, 82, 214, 0, 3, 226},
 		},
 	}
 	require.False(t, tree.VerifyProof(proof, root, []byte("value5")))
