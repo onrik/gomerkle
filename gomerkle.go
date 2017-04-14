@@ -70,12 +70,12 @@ func (tree *Tree) Leaves() []Node {
 }
 
 // Root returns the root node of the tree, if available, else nil
-func (tree *Tree) Root() *Node {
+func (tree *Tree) Root() []byte {
 	if tree.Nodes == nil {
 		return nil
 	}
 
-	return &tree.Levels[0][0]
+	return tree.Levels[0][0].Hash
 }
 
 // GetProof generates proof

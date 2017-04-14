@@ -318,17 +318,13 @@ func verifyGeneratedTree(t *testing.T, tree *Tree) {
 	require.NotNil(t, rootRow)
 
 	// The root row should be of length 1
-	require.Equal(t, len(rootRow), 1,
-		"The root row should contain only 1 node")
+	require.Equal(t, 1, len(rootRow))
 
 	// the Root() should be the only item in the top row
-	require.Equal(t, tree.Root(), &rootRow[0],
-		"tree.Root() is not the expected node")
+	require.Equal(t, rootRow[0].Hash, tree.Root())
 
 	// The Leaves() should the deepest row
-	require.Equal(t, len(tree.Leaves()),
-		len(tree.GetNodesAtHeight(tree.Height())),
-		"tree.Leaves() is not the expected row")
+	require.Equal(t, len(tree.GetNodesAtHeight(tree.Height())), len(tree.Leaves()))
 }
 
 func verifyInitialState(t *testing.T, tree *Tree) {
@@ -427,7 +423,7 @@ func TestGenerateWithOneNode(t *testing.T) {
 
 	proof := tree.GetProof(0)
 	require.Equal(t, 0, len(proof))
-	require.Equal(t, tree.hash(value), tree.Root().Hash)
+	require.Equal(t, tree.hash(value), tree.Root())
 }
 
 func TestGetNodesAtHeight(t *testing.T) {
@@ -508,7 +504,7 @@ func TestRootHashValue(t *testing.T) {
 	// Calculate the root hash with the simpler method
 	merk := simpleMerkle(data)
 
-	require.True(t, bytes.Equal(tree.Root().Hash, merk))
+	require.True(t, bytes.Equal(tree.Root(), merk))
 }
 
 func TestGetProof(t *testing.T) {
@@ -555,7 +551,7 @@ func TestVerifyProof(t *testing.T) {
 	err := tree.Generate()
 	require.Nil(t, err)
 
-	root := tree.Root().Hash
+	root := tree.Root()
 	for i := 0; i < len(data); i++ {
 		proof := tree.GetProof(i)
 		require.True(t, tree.VerifyProof(proof, root, data[i]))
