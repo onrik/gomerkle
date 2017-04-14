@@ -122,7 +122,7 @@ func failNotEqual(t *testing.T, label string, input interface{},
 func TestCalculateTreeHeight(t *testing.T) {
 	inputs := [][]uint64{
 		{0, 0},
-		{1, 2},
+		{1, 1},
 		{2, 2},
 		{3, 3},
 		{4, 3},
@@ -415,6 +415,19 @@ func TestGenerateFailedHash(t *testing.T) {
 	err = tree.Generate()
 	require.NotNil(t, err)
 	require.Equal(t, "Failed to write hash", err.Error())
+}
+
+func TestGenerateWithOneNode(t *testing.T) {
+	value := []byte("value")
+	tree := NewTree(md5.New())
+	tree.AddData(value)
+
+	err := tree.Generate()
+	require.Nil(t, err)
+
+	proof := tree.GetProof(0)
+	require.Equal(t, 0, len(proof))
+	require.Equal(t, tree.hash(value), tree.Root().Hash)
 }
 
 func TestGetNodesAtHeight(t *testing.T) {

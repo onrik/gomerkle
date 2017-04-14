@@ -161,16 +161,18 @@ func (tree *Tree) Generate() error {
 	}
 	levels[height-1] = nodes[:len(tree.blocks)]
 
-	// Create each node level
-	current := nodes[len(tree.blocks):]
-	for i := height - 1; i > 0; i-- {
-		below := levels[i]
-		wrote, err := tree.generateNodeLevel(below, current, tree.hasher)
-		if err != nil {
-			return err
+	if blockCount > 1 {
+		// Create each node level
+		current := nodes[len(tree.blocks):]
+		for i := height - 1; i > 0; i-- {
+			below := levels[i]
+			wrote, err := tree.generateNodeLevel(below, current, tree.hasher)
+			if err != nil {
+				return err
+			}
+			levels[i-1] = current[:wrote]
+			current = current[wrote:]
 		}
-		levels[i-1] = current[:wrote]
-		current = current[wrote:]
 	}
 
 	tree.Nodes = nodes
@@ -252,7 +254,7 @@ func calculateTreeHeight(nodeCount uint64) uint64 {
 	if nodeCount == 0 {
 		return 0
 	} else if nodeCount == 1 {
-		return 2
+		return 1
 	} else {
 		return log2(nextPowerOfTwo(nodeCount)) + 1
 	}
