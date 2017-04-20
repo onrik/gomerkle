@@ -36,6 +36,7 @@ func main() {
 
     // Proof for Jessie
     proof := tree.GetProof(4)
-    println(tree.VerifyProof(proof, tree.Root(), data[4]))
+    leaf := tree.GetLeaf(4)
+    println(tree.VerifyProof(proof, tree.Root(), leaf))
 }
 ```
