@@ -277,12 +277,6 @@ func verifyGeneratedTree(t *testing.T, tree *Tree) {
 	require.Equal(t, len(tree.Nodes), cap(tree.Nodes),
 		"tree.Nodes len should equal its cap")
 
-	// The leaves should not have children
-	for _, n := range tree.Leaves() {
-		require.Nil(t, n.Left)
-		require.Nil(t, n.Right)
-	}
-
 	for i := tree.Height() - 1; i > 0; i-- {
 		// All the other nodes should have children, and their children
 		// should be in the deeper level
@@ -322,9 +316,6 @@ func verifyGeneratedTree(t *testing.T, tree *Tree) {
 
 	// the Root() should be the only item in the top row
 	require.Equal(t, rootRow[0].Hash, tree.Root())
-
-	// The Leaves() should the deepest row
-	require.Equal(t, len(tree.GetNodesAtHeight(tree.Height())), len(tree.Leaves()))
 }
 
 func verifyInitialState(t *testing.T, tree *Tree) {
@@ -368,10 +359,10 @@ func TestTreeUngenerated(t *testing.T) {
 	err := tree.Generate()
 	require.NotNil(t, err)
 	require.Equal(t, "Empty tree", err.Error())
-	require.Nil(t, tree.Leaves())
 	require.Nil(t, tree.Root())
 	require.Equal(t, uint64(0), tree.Height())
 	require.Nil(t, tree.Nodes)
+	require.Nil(t, tree.GetLeaf(0))
 }
 
 func TestTreeGenerate(t *testing.T) {
@@ -386,6 +377,11 @@ func TestTreeGenerate(t *testing.T) {
 	err := tree.Generate()
 	require.Nil(t, err)
 	verifyGeneratedTree(t, &tree)
+
+	for i := range data {
+		hash := tree.hash(data[i])
+		require.Equal(t, hash, tree.GetLeaf(i))
+	}
 
 	// Generating with no blocks should return error
 	tree = NewTree(NewSimpleHash())
@@ -554,7 +550,8 @@ func TestVerifyProof(t *testing.T) {
 	root := tree.Root()
 	for i := 0; i < len(data); i++ {
 		proof := tree.GetProof(i)
-		require.True(t, tree.VerifyProof(proof, root, data[i]))
+		leaf := tree.GetLeaf(i)
+		require.True(t, tree.VerifyProof(proof, root, leaf))
 
 	}
 
@@ -578,7 +575,8 @@ func TestVerifyProof(t *testing.T) {
 		},
 	}
 	root = []byte{198, 171, 151, 198, 99, 102, 171, 160, 114, 231, 230, 66, 133, 203, 93, 244}
-	require.True(t, tree.VerifyProof(proof, root, []byte("value5")))
+	leaf := []byte{0x8a, 0xfb, 0x7a, 0xa8, 0xa1, 0xa0, 0xdd, 0x7b, 0xd7, 0x7c, 0xa8, 0x85, 0x7b, 0xcc, 0x42, 0x2d}
+	require.True(t, tree.VerifyProof(proof, root, leaf))
 
 	// Test invalid proof
 	proof = Proof{
@@ -598,7 +596,7 @@ func TestVerifyProof(t *testing.T) {
 			"left": {37, 153, 197, 153, 191, 14, 1, 134, 75, 185, 94, 199, 7, 212, 201, 178},
 		},
 	}
-	require.False(t, tree.VerifyProof(proof, root, []byte("value5")))
+	require.False(t, tree.VerifyProof(proof, root, leaf))
 
 	proof = Proof{
 		map[string][]byte{
@@ -609,5 +607,5 @@ func TestVerifyProof(t *testing.T) {
 			"right": {86, 22, 191, 37, 72, 68, 16, 116, 208, 179, 61, 82, 214, 0, 3, 226},
 		},
 	}
-	require.False(t, tree.VerifyProof(proof, root, []byte("value5")))
+	require.False(t, tree.VerifyProof(proof, root, leaf))
 }

@@ -60,15 +60,6 @@ func (tree *Tree) hash(data []byte) []byte {
 	return tree.hasher.Sum(nil)
 }
 
-// Leaves returns a slice of the leaf nodes in the tree, if available, else nil
-func (tree *Tree) Leaves() []Node {
-	if tree.Levels == nil {
-		return nil
-	}
-
-	return tree.Levels[len(tree.Levels)-1]
-}
-
 // Root returns the root node of the tree, if available, else nil
 func (tree *Tree) Root() []byte {
 	if tree.Nodes == nil {
@@ -76,6 +67,15 @@ func (tree *Tree) Root() []byte {
 	}
 
 	return tree.Levels[0][0].Hash
+}
+
+// GetLeaf returns leaf hash
+func (tree *Tree) GetLeaf(index int) []byte {
+	if tree.Levels == nil {
+		return nil
+	}
+
+	return tree.Levels[len(tree.Levels)-1][index].Hash
 }
 
 // GetProof generates proof
@@ -110,7 +110,7 @@ func (tree *Tree) GetProof(index int) Proof {
 
 // VerifyProof verify proof for value
 func (tree *Tree) VerifyProof(proof Proof, root, value []byte) bool {
-	proofHash := tree.hash(value)
+	proofHash := value
 
 	for _, p := range proof {
 		if sibling, exist := p["left"]; exist {
