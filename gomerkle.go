@@ -16,11 +16,20 @@ type Node struct {
 	Right *Node
 }
 
+type block struct {
+	data   []byte
+	hashed bool
+}
+
 // NewNode creates a node given a hash function and data to hash
 func NewNode(h hash.Hash, block []byte) (Node, error) {
-	if h == nil || block == nil {
+	if block == nil {
 		return Node{}, nil
 	}
+	if h == nil {
+		return Node{Hash: block}, nil
+	}
+
 	defer h.Reset()
 	_, err := h.Write(block[:])
 	if err != nil {
@@ -32,7 +41,7 @@ func NewNode(h hash.Hash, block []byte) (Node, error) {
 // Tree presents merkle tree
 type Tree struct {
 	hasher hash.Hash
-	blocks [][]byte
+	blocks []block
 
 	// All nodes, linear
 	Nodes []Node
@@ -44,13 +53,26 @@ type Tree struct {
 func NewTree(hasher hash.Hash) Tree {
 	return Tree{
 		hasher: hasher,
-		blocks: [][]byte{},
+		blocks: []block{},
 	}
 }
 
 // AddData add data to the tree
 func (tree *Tree) AddData(data ...[]byte) {
-	tree.blocks = append(tree.blocks, data...)
+	blocks := make([]block, len(data))
+	for i := range data {
+		blocks[i] = block{data[i], false}
+	}
+	tree.blocks = append(tree.blocks, blocks...)
+}
+
+// AddHash add hashed data to the tree
+func (tree *Tree) AddHash(data ...[]byte) {
+	blocks := make([]block, len(data))
+	for i := range data {
+		blocks[i] = block{data[i], true}
+	}
+	tree.blocks = append(tree.blocks, blocks...)
 }
 
 func (tree *Tree) hash(data []byte) []byte {
@@ -151,13 +173,17 @@ func (tree *Tree) Generate() error {
 	levels := make([][]Node, height)
 	nodes := make([]Node, nodeCount)
 
+	var err error
 	// Create the leaf nodes
 	for i, block := range tree.blocks {
-		node, err := NewNode(tree.hasher, block)
+		if block.hashed {
+			nodes[i], err = NewNode(nil, block.data)
+		} else {
+			nodes[i], err = NewNode(tree.hasher, block.data)
+		}
 		if err != nil {
 			return err
 		}
-		nodes[i] = node
 	}
 	levels[height-1] = nodes[:len(tree.blocks)]
 

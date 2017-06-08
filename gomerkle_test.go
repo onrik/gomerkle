@@ -334,12 +334,15 @@ func TestNewNode(t *testing.T) {
 	n, err = NewNode(nil, nil)
 	require.Nil(t, err)
 	require.Nil(t, n.Hash)
-	n, err = NewNode(nil, block)
-	require.Nil(t, err)
-	require.Nil(t, n.Hash)
+
 	n, err = NewNode(h, nil)
 	require.Nil(t, err)
 	require.Nil(t, n.Hash)
+
+	// Hashed data
+	n, err = NewNode(nil, block)
+	require.Nil(t, err)
+	require.Equal(t, block, n.Hash)
 
 	// Check hash error handling
 	h = NewFailingHash()
