@@ -7,7 +7,7 @@ import (
 )
 
 // Proof presents merkle tree proof
-type Proof []map[string][]byte
+type Proof []map[bool][]byte
 
 // Node presents merkle tree node
 type Node struct {
@@ -104,7 +104,7 @@ func (tree *Tree) GetLeaf(index int) []byte {
 func (tree *Tree) GetProof(index int) Proof {
 	proof := Proof{}
 	var siblingIndex int
-	var siblingPosition string
+	var siblingPosition bool
 
 	for i := len(tree.Levels) - 1; i > 0; i-- {
 		levelLen := len(tree.Levels[i])
@@ -115,13 +115,13 @@ func (tree *Tree) GetProof(index int) Proof {
 
 		if index%2 == 0 {
 			siblingIndex = index + 1
-			siblingPosition = "right"
+			siblingPosition = true
 		} else {
 			siblingIndex = index - 1
-			siblingPosition = "left"
+			siblingPosition = false
 		}
 
-		proof = append(proof, map[string][]byte{
+		proof = append(proof, map[bool][]byte{
 			siblingPosition: tree.Levels[i][siblingIndex].Hash,
 		})
 		index = int(index / 2)
@@ -135,9 +135,9 @@ func (tree *Tree) VerifyProof(proof Proof, root, value []byte) bool {
 	proofHash := value
 
 	for _, p := range proof {
-		if sibling, exist := p["left"]; exist {
+		if sibling, exist := p[false]; exist {
 			proofHash = tree.hash(append(sibling, proofHash...))
-		} else if sibling, exist := p["right"]; exist {
+		} else if sibling, exist := p[true]; exist {
 			proofHash = tree.hash(append(proofHash, sibling...))
 		} else {
 			return false
