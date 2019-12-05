@@ -1,1 +1,5 @@
-module github.com/onrik/gomerkle
+module github.com/pokt-network/gomerkle
+
+go 1.13
+
+require github.com/stretchr/testify v1.4.0
