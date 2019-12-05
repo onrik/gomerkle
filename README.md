@@ -12,8 +12,9 @@ package main
 
 import (
     "crypto/sha256"
+    "fmt"
 
-    "github.com/onrik/gomerkle"
+    "github.com/pokt-network/gomerkle"
 )
 
 func main() {
@@ -37,6 +38,6 @@ func main() {
     // Proof for Jessie
     proof := tree.GetProof(4)
     leaf := tree.GetLeaf(4)
-    println(tree.VerifyProof(proof, tree.Root(), leaf))
+    fmt.Println(tree.VerifyProof(proof, tree.Root(), leaf))
 }
 ```
